@@ -120,8 +120,27 @@ def main():
     parser.add_argument("-c", "--color", default="black", help="QR color (default: black)")
     parser.add_argument("-b", "--background", default="white", help="Background color (default: white)")
     parser.add_argument("-i", "--invert", action="store_true", help="Invert terminal colors (for dark themes)")
+    parser.add_argument("-f", "--file", help="Generate QR codes for each line in file")
 
     args = parser.parse_args()
+
+    if args.file:
+        try:
+            with open(args.file, "r", encoding="utf-8") as f:
+                lines = [l.strip() for l in f if l.strip()]
+        except FileNotFoundError:
+            print(f"{RED}Error: File '{args.file}' not found{RESET}")
+            sys.exit(1)
+
+        for line in lines:
+            print(f"\n{YELLOW}QR for:{RESET} {line}")
+            matrix = generate_qr(line)
+            print(qr_to_ascii(matrix, invert=args.invert))
+            if args.output:
+                base, ext = os.path.splitext(args.output)
+                fname = f"{base}_{lines.index(line)}{ext}"
+                save_image(line, fname, args.color, args.background)
+        return
 
     text = args.text or read_stdin()
 
